@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
+import '../utils/constants.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -19,7 +22,7 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
@@ -27,16 +30,36 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // Extract username from email
-    String username = _emailController.text.split('@')[0];
+    final success = await ref
+        .read(authProvider.notifier)
+        .login(_emailController.text, _passwordController.text);
 
-    Navigator.of(context).pushReplacementNamed('/home', arguments: username);
+    if (!mounted) return;
+
+    if (success) {
+      // Main.dart will react to authState change, but we can also push if specific nav is needed
+      // For now, let's allow success/error feedback
+    } else {
+      final error = ref.read(authProvider).error ?? 'Login failed';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Listen to auth changes to navigate
+    ref.listen(authProvider, (previous, next) {
+      if (next.isAuthenticated) {
+        Navigator.of(
+          context,
+        ).pushReplacementNamed('/home', arguments: next.username);
+      }
+    });
+
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -47,24 +70,23 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 40),
                 Text(
                   'Welcome',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
+                  style: AppTextStyles.headingLarge.copyWith(
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Sign in to your account',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.grey[600],
+                  ),
                 ),
                 const SizedBox(height: 40),
                 Text(
                   'Email',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -77,15 +99,18 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.email),
+                    prefixIcon: const Icon(
+                      Icons.email,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
                   'Mot de passe',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -99,12 +124,16 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.lock),
+                    prefixIcon: const Icon(
+                      Icons.lock,
+                      color: AppColors.primary,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_off
                             : Icons.visibility,
+                        color: AppColors.primary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -121,7 +150,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: ElevatedButton(
                     onPressed: _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
+                      backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -140,18 +169,15 @@ class _LoginPageState extends State<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'No account? ',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+                    Text('No account? ', style: AppTextStyles.bodyMedium),
                     GestureDetector(
                       onTap: () {
                         Navigator.of(context).pushNamed('/signup');
                       },
                       child: Text(
                         'Sign Up',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.deepPurple,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

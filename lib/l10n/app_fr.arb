@@ -1,0 +1,14 @@
+{
+  "appTitle": "Monde Culinaire",
+  "welcome": "Bienvenue",
+  "searchHint": "Rechercher plats, pays...",
+  "ingredients": "Ingrédients",
+  "instructions": "Préparation",
+  "close": "Fermer",
+  "settings": "Paramètres",
+  "darkMode": "Mode Sombre",
+  "language": "Langue",
+  "favorites": "Favoris",
+  "noFavorites": "Aucun favori pour le moment",
+  "famousFor": "Célèbre pour"
+}

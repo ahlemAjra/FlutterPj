@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
+import '../utils/constants.dart';
 
-class SignupPage extends StatefulWidget {
+class SignupPage extends ConsumerStatefulWidget {
   const SignupPage({super.key});
 
   @override
-  State<SignupPage> createState() => _SignupPageState();
+  ConsumerState<SignupPage> createState() => _SignupPageState();
 }
 
-class _SignupPageState extends State<SignupPage> {
+class _SignupPageState extends ConsumerState<SignupPage> {
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -24,7 +27,7 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  void _signup() {
+  void _signup() async {
     if (_usernameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
@@ -51,23 +54,52 @@ class _SignupPageState extends State<SignupPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Account created successfully!')),
-    );
+    final success = await ref
+        .read(authProvider.notifier)
+        .signUp(
+          _usernameController.text,
+          _emailController.text,
+          _passwordController.text,
+        );
 
-    Navigator.of(
-      context,
-    ).pushReplacementNamed('/home', arguments: _usernameController.text);
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account created successfully!')),
+      );
+    } else {
+      final error = ref.read(authProvider).error ?? 'Registration failed';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Listen to auth changes
+    ref.listen(authProvider, (previous, next) {
+      if (next.isAuthenticated) {
+        // Pop all routes and go home
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/home',
+          (route) => false,
+          arguments: next.username,
+        );
+      }
+    });
+
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
-        title: const Text('Create Account'),
+        title: const Text(
+          'Create Account',
+          style: TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
+        backgroundColor: AppColors.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -79,9 +111,9 @@ class _SignupPageState extends State<SignupPage> {
                 const SizedBox(height: 20),
                 Text(
                   'Username',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -94,15 +126,18 @@ class _SignupPageState extends State<SignupPage> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.person),
+                    prefixIcon: const Icon(
+                      Icons.person,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
                   'Email',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -115,15 +150,18 @@ class _SignupPageState extends State<SignupPage> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.email),
+                    prefixIcon: const Icon(
+                      Icons.email,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
                   'Mot de passe',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -137,12 +175,16 @@ class _SignupPageState extends State<SignupPage> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.lock),
+                    prefixIcon: const Icon(
+                      Icons.lock,
+                      color: AppColors.primary,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_off
                             : Icons.visibility,
+                        color: AppColors.primary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -155,9 +197,9 @@ class _SignupPageState extends State<SignupPage> {
                 const SizedBox(height: 24),
                 Text(
                   'Confirm Password',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -171,12 +213,16 @@ class _SignupPageState extends State<SignupPage> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.lock),
+                    prefixIcon: const Icon(
+                      Icons.lock,
+                      color: AppColors.primary,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword
                             ? Icons.visibility_off
                             : Icons.visibility,
+                        color: AppColors.primary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -193,7 +239,7 @@ class _SignupPageState extends State<SignupPage> {
                   child: ElevatedButton(
                     onPressed: _signup,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
+                      backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -214,7 +260,7 @@ class _SignupPageState extends State<SignupPage> {
                   children: [
                     Text(
                       'Already signed up? ',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: AppTextStyles.bodyMedium,
                     ),
                     GestureDetector(
                       onTap: () {
@@ -222,8 +268,8 @@ class _SignupPageState extends State<SignupPage> {
                       },
                       child: Text(
                         'Sign In',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.deepPurple,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

@@ -1,0 +1,14 @@
+{
+  "appTitle": "Culinary World",
+  "welcome": "Welcome",
+  "searchHint": "Search dishes, countries...",
+  "ingredients": "Ingredients",
+  "instructions": "How to cook",
+  "close": "Close",
+  "settings": "Settings",
+  "darkMode": "Dark Mode",
+  "language": "Language",
+  "favorites": "Favorites",
+  "noFavorites": "No favorites yet",
+  "famousFor": "Famous for"
+}

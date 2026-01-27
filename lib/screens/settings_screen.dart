@@ -1,294 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_localizations.dart';
+import '../providers/theme_provider.dart';
+import '../providers/language_provider.dart';
+import '../providers/auth_provider.dart';
+import '../utils/constants.dart';
 
-class SettingsPage extends StatefulWidget {
+class SettingsPage extends ConsumerWidget {
   final String username;
 
   const SettingsPage({super.key, required this.username});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
+    final locale = ref.watch(languageProvider);
+    final l10n = AppLocalizations.of(context)!;
 
-class _SettingsPageState extends State<SettingsPage> {
-  bool _notificationsEnabled = true;
-  bool _darkModeEnabled = false;
-  String _language = 'English';
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
-        title: const Text('Settings'),
-        centerTitle: true,
+        title: Text(l10n.settings, style: const TextStyle(color: Colors.white)),
+        backgroundColor: AppColors.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Profile Section
-            Container(
-              padding: const EdgeInsets.all(20),
-              color: Colors.deepPurple.withValues(alpha: 0.1),
-              child: Column(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.deepPurple,
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    child: Center(
-                      child: Text(
-                        _getInitials(),
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    widget.username,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${widget.username}@culinary.com',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
-                ],
+      body: ListView(
+        children: [
+          UserAccountsDrawerHeader(
+            accountName: Text(
+              username,
+              style: AppTextStyles.headingMedium.copyWith(color: Colors.white),
+            ),
+            accountEmail: const Text(
+              "user@example.com",
+              style: TextStyle(color: Colors.white70),
+            ),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Text(
+                username.isNotEmpty ? username[0].toUpperCase() : "U",
+                style: const TextStyle(
+                  fontSize: 40.0,
+                  color: AppColors.primary,
+                ),
               ),
             ),
-            const SizedBox(height: 20),
-            // Settings Sections
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Notifications Section
-                  Text(
-                    'Notifications',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      title: const Text('Enable notifications'),
-                      subtitle: Text(
-                        _notificationsEnabled
-                            ? 'Notifications enabled'
-                            : 'Notifications disabled',
-                      ),
-                      trailing: Switch(
-                        value: _notificationsEnabled,
-                        onChanged: (value) {
-                          setState(() {
-                            _notificationsEnabled = value;
-                          });
-                        },
-                        activeThumbColor: Colors.deepPurple,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Appearance Section
-                  Text(
-                    'Appearance',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      title: const Text('Dark Mode'),
-                      subtitle: Text(_darkModeEnabled ? 'Enabled' : 'Disabled'),
-                      trailing: Switch(
-                        value: _darkModeEnabled,
-                        onChanged: (value) {
-                          setState(() {
-                            _darkModeEnabled = value;
-                          });
-                        },
-                        activeThumbColor: Colors.deepPurple,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Language Section
-                  Text(
-                    'Language',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: _language,
-                        underline: const SizedBox(),
-                        items: ['English', 'Français', 'العربية'].map((
-                          String value,
-                        ) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                              ),
-                              child: Text(value),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _language = newValue;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Account Section
-                  Text(
-                    'Account',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      title: const Text('Change Password'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 18),
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Feature to implement')),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      title: const Text('About Application'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 18),
-                      onTap: () {
-                        _showAboutDialog(context);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Logout Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _showLogoutConfirmation(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Sign Out',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
+            decoration: const BoxDecoration(color: AppColors.primary),
+          ),
+          SwitchListTile(
+            title: Text(l10n.darkMode, style: AppTextStyles.bodyMedium),
+            value: themeMode == ThemeMode.dark,
+            secondary: Icon(
+              themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
+              color: AppColors.primary,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _getInitials() {
-    final parts = widget.username.split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return widget.username.substring(0, 2).toUpperCase();
-  }
-
-  void _showAboutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('À propos'),
-        content: const Text(
-          'Global Culinary Discovery Application\n\nVersion 1.0.0\n\n© 2024 Culinary World',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign Out?'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.of(context).pushReplacementNamed('/login');
+            activeThumbColor:
+                AppColors.primary, // Replaced activeColor with activeThumbColor
+            onChanged: (value) {
+              ref.read(themeProvider.notifier).toggleTheme();
             },
-            child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+          ),
+          ListTile(
+            title: Text(l10n.language, style: AppTextStyles.bodyMedium),
+            subtitle: Text(
+              locale.languageCode == 'en' ? 'English' : 'Français',
+            ),
+            leading: const Icon(Icons.language, color: AppColors.primary),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              ref.read(languageProvider.notifier).toggleLanguage();
+            },
+          ),
+          ListTile(
+            title: Text(
+              'Logout',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.accent),
+            ),
+            leading: const Icon(Icons.logout, color: AppColors.accent),
+            onTap: () async {
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) {
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/login', (route) => false);
+              }
+            },
           ),
         ],
       ),

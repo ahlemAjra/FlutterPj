@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_localizations.dart';
 import '../models/country_model.dart';
+import '../providers/favorites_provider.dart';
+import '../utils/constants.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   final String username;
 
   const HomePage({super.key, required this.username});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
+  String _searchQuery = '';
+
   void _showDishesModal(BuildContext context, Country country) {
     showModalBottomSheet(
       context: context,
@@ -22,10 +28,11 @@ class _HomePageState extends State<HomePage> {
           minChildSize: 0.5,
           maxChildSize: 0.95,
           builder: (context, scrollController) {
+            final l10n = AppLocalizations.of(context)!;
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(25),
                   topRight: Radius.circular(25),
                 ),
@@ -61,19 +68,13 @@ class _HomePageState extends State<HomePage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Famous Dishes',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    l10n.famousFor,
+                                    style: AppTextStyles.bodySmall,
                                   ),
                                   Text(
                                     country.name,
-                                    style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.deepPurple,
+                                    style: AppTextStyles.headingMedium.copyWith(
+                                      color: AppColors.primary,
                                     ),
                                   ),
                                 ],
@@ -83,97 +84,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: 24),
                         ...country.dishes.map((dish) {
-                          return GestureDetector(
-                            onTap: () {
-                              _showDishDetailsDialog(context, dish);
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 16),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.deepPurple.withValues(alpha: 0.1),
-                                    Colors.blue.withValues(alpha: 0.05),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Colors.deepPurple.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 70,
-                                      height: 70,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(12),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.deepPurple.withValues(
-                                              alpha: 0.2,
-                                            ),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          dish.emoji,
-                                          style: const TextStyle(fontSize: 40),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            dish.name,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.deepPurple,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            dish.description,
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.grey[700],
-                                              height: 1.4,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Icon(
-                                      Icons.arrow_forward_ios,
-                                      size: 16,
-                                      color: Colors.deepPurple.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
+                          return _buildDishCard(context, dish);
                         }),
                       ],
                     ),
@@ -187,7 +98,80 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildDishCard(BuildContext context, Dish dish) {
+    final isFavorite = ref.watch(favoritesProvider).contains(dish.name);
+
+    return GestureDetector(
+      onTap: () {
+        _showDishDetailsDialog(context, dish);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: AppDecorations.cardDecoration(context),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(dish.emoji, style: const TextStyle(fontSize: 40)),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      dish.name,
+                      style: AppTextStyles.headingMedium.copyWith(fontSize: 18),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      dish.description,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite ? AppColors.accent : Colors.grey,
+                ),
+                onPressed: () {
+                  ref
+                      .read(favoritesProvider.notifier)
+                      .toggleFavorite(dish.name);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showDishDetailsDialog(BuildContext context, Dish dish) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) {
@@ -196,7 +180,7 @@ class _HomePageState extends State<HomePage> {
           insetPadding: const EdgeInsets.all(20),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
@@ -210,13 +194,13 @@ class _HomePageState extends State<HomePage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.deepPurple, Colors.blue.shade600],
+                      colors: [AppColors.primary, AppColors.secondary],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: const BorderRadius.only(
+                    borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(24),
                       topRight: Radius.circular(24),
                     ),
@@ -237,10 +221,8 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Text(
                           dish.name,
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepPurple,
+                          style: AppTextStyles.headingLarge.copyWith(
+                            color: AppColors.primary,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -250,28 +232,19 @@ class _HomePageState extends State<HomePage> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.deepPurple.withValues(alpha: 0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
                             'Description',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.deepPurple,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          dish.description,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[700],
-                            height: 1.6,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        Text(dish.description, style: AppTextStyles.bodyMedium),
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -282,9 +255,9 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.amber.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            'Ingredients',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.ingredients,
+                            style: const TextStyle(
                               fontSize: 12,
                               color: Colors.amber,
                               fontWeight: FontWeight.w600,
@@ -313,24 +286,12 @@ class _HomePageState extends State<HomePage> {
                                   color: Colors.amber.withValues(alpha: 0.4),
                                 ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.check_circle,
-                                    size: 14,
-                                    color: Colors.amber[700],
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    ingredient,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey[800],
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                ingredient,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             );
                           }).toList(),
@@ -342,14 +303,14 @@ class _HomePageState extends State<HomePage> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.deepPurple.withValues(alpha: 0.05),
+                            color: AppColors.primary.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            'How to cook',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.instructions,
+                            style: const TextStyle(
                               fontSize: 12,
-                              color: Colors.deepPurple,
+                              color: AppColors.primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -357,12 +318,7 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: 8),
                         Text(
                           dish.cookingInstructions,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[700],
-                            height: 1.6,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: AppTextStyles.bodyMedium,
                         ),
                         const SizedBox(height: 24),
                         SizedBox(
@@ -372,15 +328,15 @@ class _HomePageState extends State<HomePage> {
                               Navigator.of(context).pop();
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
+                              backgroundColor: AppColors.primary,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text(
-                              'Fermer',
-                              style: TextStyle(
+                            child: Text(
+                              l10n.close,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -402,26 +358,85 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Only resolve localizations once available
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // Filter logic
+    final filteredCountries = countries.where((country) {
+      if (_searchQuery.isEmpty) return true;
+      final q = _searchQuery.toLowerCase();
+      // Match Country name OR any dish name
+      return country.name.toLowerCase().contains(q) ||
+          country.dishes.any((d) => d.name.toLowerCase().contains(q));
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: AppColors.primary,
         elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Welcome',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-            ),
-            Text(
-              widget.username,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
+        title: _searchQuery.isEmpty
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.welcome,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    widget.username,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              )
+            : TextField(
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: l10n.searchHint,
+                  hintStyle: const TextStyle(color: Colors.white70),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+              ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: Icon(
+              _searchQuery.isEmpty ? Icons.search : Icons.close,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              setState(() {
+                if (_searchQuery.isNotEmpty) {
+                  _searchQuery = '';
+                } else {
+                  _searchQuery = ' '; // trigger search mode
+                }
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.favorite, color: Colors.white),
+            onPressed: () {
+              Navigator.pushNamed(context, '/favorites');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white),
             onPressed: () {
               Navigator.of(
                 context,
@@ -430,172 +445,83 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: countries.length,
-        padding: const EdgeInsets.all(16),
-        itemBuilder: (context, index) {
-          final country = countries[index];
-          return GestureDetector(
-            onTap: () {
-              _showDishesModal(context, country);
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 600;
+          final crossAxisCount = isWide ? 3 : 1;
+
+          if (isWide) {
+            return GridView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: filteredCountries.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.5,
+              ),
+              itemBuilder: (context, index) {
+                final country = filteredCountries[index];
+                return _buildCountryCard(context, country, isWide: true);
+              },
+            );
+          }
+
+          return ListView.builder(
+            itemCount: filteredCountries.length,
+            padding: const EdgeInsets.all(16),
+            itemBuilder: (context, index) {
+              final country = filteredCountries[index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildCountryCard(context, country),
+              );
             },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.deepPurple.withValues(alpha: 0.08),
-                    Colors.blue.withValues(alpha: 0.04),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: Colors.deepPurple.withValues(alpha: 0.15),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.deepPurple.withValues(alpha: 0.1),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    _showDishesModal(context, country);
-                  },
-                  borderRadius: BorderRadius.circular(18),
-                  child: Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.deepPurple.withValues(
-                                      alpha: 0.15,
-                                    ),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Center(
-                                child: Text(
-                                  country.flag,
-                                  style: const TextStyle(fontSize: 32),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    country.name,
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.deepPurple,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    'Famous for: ${country.famousFor}',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey[700],
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          country.description,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[700],
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.deepPurple.withValues(alpha: 0.15),
-                                    Colors.blue.withValues(alpha: 0.1),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: Colors.deepPurple.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.restaurant_menu,
-                                    size: 16,
-                                    color: Colors.deepPurple,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '${country.dishes.length} dishes',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.deepPurple,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Spacer(),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              size: 18,
-                              color: Colors.deepPurple.withValues(alpha: 0.6),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildCountryCard(
+    BuildContext context,
+    Country country, {
+    bool isWide = false,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        _showDishesModal(context, country);
+      },
+      child: Container(
+        decoration: AppDecorations.cardDecoration(context),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              Text(country.flag, style: TextStyle(fontSize: isWide ? 48 : 40)),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      country.name,
+                      style: AppTextStyles.headingMedium.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    Text(
+                      '${country.dishes.length} dishes',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              if (!isWide) const Icon(Icons.arrow_forward_ios, size: 16),
+            ],
+          ),
+        ),
       ),
     );
   }
