@@ -87,6 +87,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await sessionBox.delete('currentUser');
     state = AuthState(isAuthenticated: false);
   }
+
+  Future<bool> verifyEmail(String email) async {
+    final usersBox = Hive.box('users');
+    if (usersBox.containsKey(email)) {
+      return true;
+    }
+    state = AuthState(error: 'Email not found');
+    return false;
+  }
+
+  Future<bool> resetPassword(String email, String newPassword) async {
+    final usersBox = Hive.box('users');
+    if (!usersBox.containsKey(email)) {
+      state = AuthState(error: 'Email not found');
+      return false;
+    }
+
+    final userData = usersBox.get(email);
+    final user = User.fromMap(userData);
+
+    final updatedUser = User(
+      username: user.username,
+      email: user.email,
+      password: newPassword,
+    );
+    await usersBox.put(email, updatedUser.toMap());
+
+    return true;
+  }
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {

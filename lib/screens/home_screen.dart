@@ -58,9 +58,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              country.flag,
-                              style: const TextStyle(fontSize: 32),
+                            Hero(
+                              tag: 'country_flag_${country.name}',
+                              child: Text(
+                                country.flag,
+                                style: const TextStyle(fontSize: 32),
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(

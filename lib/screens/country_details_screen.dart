@@ -13,7 +13,13 @@ class CountryDetailsPage extends StatelessWidget {
       appBar: AppBar(
         title: Row(
           children: [
-            Text(country.flag),
+            Hero(
+              tag: 'country_flag_${country.name}',
+              child: Material(
+                color: Colors.transparent,
+                child: Text(country.flag),
+              ),
+            ),
             const SizedBox(width: 8),
             Text(country.name),
           ],

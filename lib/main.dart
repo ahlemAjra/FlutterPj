@@ -8,6 +8,8 @@ import 'providers/language_provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/main_screen.dart'; // Add this
 import 'screens/home_screen.dart';
 import 'screens/country_details_screen.dart';
 import 'screens/settings_screen.dart';
@@ -62,11 +64,17 @@ class MyApp extends ConsumerWidget {
       supportedLocales: const [Locale('en'), Locale('fr')],
       // If authenticated, go straight to Home. Otherwise Login.
       home: authState.isAuthenticated
-          ? HomePage(username: authState.username ?? 'User')
+          ? MainScreen(username: authState.username ?? 'User')
           : const LoginPage(),
       routes: {
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignupPage(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
+        '/main': (context) {
+          final username =
+              ModalRoute.of(context)?.settings.arguments as String?;
+          return MainScreen(username: username ?? 'User');
+        },
         '/home': (context) {
           final username =
               ModalRoute.of(context)?.settings.arguments as String?;
