@@ -17,11 +17,19 @@ Culinary World is a Flutter app that lets users discover countries and their tra
 
 ![Login Screen](assets/01_login_screen.png)
 
+**Forgot Password:** Tap "Forgot Password?" on the login screen to reset your password.
+
+![Forgot Password](assets/08_reset_password.png)
+
 **Browse Countries:** The main screen shows a list of countries with their flags.
 
 ![Main Screen](assets/07_main_screen.png)
 
-**View Details:** Tap a country to see its cuisine and what it's famous for.
+**Popular Dishes:** Tap a country to see its popular dishes with descriptions.
+
+![Popular Dishes](assets/09_popular_dishes.png)
+
+**View Details:** Tap a dish to see its full recipe and ingredients.
 
 ![Country Details](assets/04_dish_detail.png)
 
